@@ -1,0 +1,171 @@
+:root {
+    --bg: #09090b;
+    --card: #18181b;
+    --primary: #6366f1;
+    --text: #f4f4f5;
+    --text-dim: #a1a1aa;
+    --success: #10b981;
+    --danger: #ef4444;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden; /* Sağa kaymayı engelle */
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    /* iOS Rubber-banding engelleme */
+    position: fixed;
+    touch-action: none;
+}
+
+body {
+    position: relative;
+    overflow-y: auto;
+    touch-action: manipulation;
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+    padding-bottom: 5rem;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+h1 { font-size: 1.5rem; color: var(--primary); }
+p { font-size: 0.8rem; color: var(--text-dim); }
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    background: var(--card);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    border: 1px solid #27272a;
+}
+
+.summary-card h3 { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.5rem; }
+.summary-card .value { font-size: 1.2rem; font-weight: bold; }
+
+.main-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 2rem;
+}
+
+@media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; }
+}
+
+.card {
+    background: var(--card);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    border: 1px solid #27272a;
+    margin-bottom: 1.5rem;
+}
+
+.card-title {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+form input, form textarea, form select {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    background: #09090b;
+    border: 1px solid #27272a;
+    border-radius: 0.5rem;
+    color: white;
+    font-size: 1rem;
+}
+
+.btn {
+    padding: 0.8rem 1.5rem;
+    border-radius: 0.5rem;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-primary { background: var(--primary); color: white; width: 100%; }
+.btn-icon { background: var(--card); color: white; border: 1px solid #27272a; padding: 0.5rem; }
+
+.table-container { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 500px; }
+th { text-align: left; padding: 1rem; color: var(--text-dim); font-size: 0.8rem; border-bottom: 1px solid #27272a; }
+td { padding: 1rem; border-bottom: 1px solid #27272a; }
+
+.text-success { color: var(--success); }
+.text-danger { color: var(--danger); }
+
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.spinner-ring {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--primary);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.hidden { display: none !important; }
+
+.search-container { position: relative; }
+.search-dropdown {
+    position: absolute;
+    top: 100%; left: 0; right: 0;
+    background: #18181b;
+    border: 1px solid #27272a;
+    border-radius: 0.5rem;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+}
+
+.search-item { padding: 0.8rem; cursor: pointer; border-bottom: 1px solid #27272a; font-size: 0.9rem; }
+.search-item:hover { background: #27272a; }
+
+.type-toggle { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+.toggle-btn { flex: 1; padding: 0.5rem; background: #09090b; border: 1px solid #27272a; color: var(--text-dim); border-radius: 0.5rem; cursor: pointer; }
+.toggle-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+.chart-wrapper { position: relative; height: 250px; }
