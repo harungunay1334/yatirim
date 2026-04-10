@@ -185,14 +185,14 @@ async function init() {
     // Event listener'ları kaydet
     bindEvents();
 
-    // Az önce önceki fiyatlarla UI'ı hızlıca güncelle
+    // UI'ı mevcut (kayıtlı) verilerle anında göster
     updateUI();
-
-    // Asenkron fiyat güncellemesi
-    await fetchAllPrices();
-
-    // Loading overlay'i kaldır
+    
+    // Yükleme ekranını hemen kaldır (kullanıcıyı bekletme)
     hideLoading();
+
+    // Fiyat güncellemesini arka planda başlat
+    fetchAllPrices();
 
     // Her 5 dakikada bir otomatik güncelle
     setInterval(fetchAllPrices, REFRESH_INTERVAL_MS);
@@ -470,44 +470,44 @@ function calculatePortfolio() {
  */
 async function fetchAllPrices() {
     try {
-        setPriceStatus('loading', 'Fiyatlar güncelleniyor...');
+        setPriceStatus('loading', 'Güncelleniyor...');
+        el.refreshBtn.classList.add('spinning');
 
-        // Portföyden ve işlem geçmişinden tüm ticker'ları topla
+        // SADECE GEREKLİ TICKERLARI ÇEK (HIZ İÇİN)
         const tickers = new Set();
+        
+        // 1. Temel varlıklar (Dolar, Altın, Gümüş)
+        tickers.add('USD-TRY');
+        tickers.add('XAU-TRY');
+        tickers.add('XAG-TRY');
 
-        // Her zaman listelenen hazır varlıkları ekle
-        Object.keys(ASSET_CONFIG).forEach(t => tickers.add(t));
-
-        // Özel girilen ticker'ları da ekle
+        // 2. Sadece kullanıcının portföyündeki varlıklar
         state.transactions.forEach(tx => tickers.add(tx.ticker));
 
-        // USD/TRY önce çek (ABD hisseleri için gerekli)
+        // USD/TRY önce çek (Kur bilgisi diğerleri için lazım)
         await fetchPriceForTicker('USD-TRY');
 
-        // Geri kalanları paralel çek
+        // Diğerlerini paralel çek
         const promises = [...tickers]
             .filter(t => t !== 'USD-TRY')
             .map(t => fetchPriceForTicker(t));
 
         await Promise.allSettled(promises);
 
-        // Başarı durumunu güncelle
         state.lastPriceUpdate = new Date();
         el.lastUpdateTime.textContent = state.lastPriceUpdate.toLocaleTimeString('tr-TR', {
-            hour: '2-digit', minute: '2-digit', second: '2-digit'
+            hour: '2-digit', minute: '2-digit'
         });
 
-        // Fiyatları kaydet (offline kullanım için)
         localStorage.setItem('investiq_v2_prices', JSON.stringify(state.prices));
-
         setPriceStatus('live', 'Canlı Fiyatlar');
         updateUI();
 
     } catch (err) {
         console.error('fetchAllPrices hatası:', err);
-        setPriceStatus('error', 'Fiyat güncellenemedi');
-        showToast('Bazı fiyatlar güncellenemedi. Önceki değerler kullanılıyor.', 'error');
-        updateUI();
+        setPriceStatus('error', 'Hata');
+    } finally {
+        el.refreshBtn.classList.remove('spinning');
     }
 }
 
