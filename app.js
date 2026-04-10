@@ -130,48 +130,29 @@ const state = {
     usdTry: 0
 };
 
-/* ============================================================
-   3. DOM REFERANSLARI
-   ============================================================ */
-const el = {
-    form:            document.getElementById('transactionForm'),
-    portfolioBody:   document.getElementById('portfolioBody'),
-    historyBody:     document.getElementById('historyBody'),
-    totalWealth:     document.getElementById('totalWealth'),
-    wealthCost:      document.getElementById('wealthCost'),
-    totalPL:         document.getElementById('totalProfitLoss'),
-    profitTrend:     document.getElementById('profitTrend'),
-    plIcon:          document.getElementById('plIcon'),
-    bestPerformer:   document.getElementById('bestPerformer'),
-    bestPct:         document.getElementById('bestPerformerPct'),
-    assetCount:      document.getElementById('assetCount'),
-    txCount:         document.getElementById('txCount'),
-    clearData:       document.getElementById('clearData'),
-    refreshBtn:      document.getElementById('refreshBtn'),
-    loadingOverlay:  document.getElementById('loadingOverlay'),
-    lastUpdateTime:  document.getElementById('lastUpdateTime'),
-    priceStatus:     document.getElementById('priceStatusBadge'),
-    pieCanvas:       document.getElementById('distributionChart'),
-    lineCanvas:      document.getElementById('lineChart'),
-    chartEmpty:      document.getElementById('chartEmpty'),
-    lineChartEmpty:  document.getElementById('lineChartEmpty'),
-    portfolioEmpty:  document.getElementById('portfolioEmpty'),
-    historyEmpty:    document.getElementById('historyEmpty'),
-    assetCategory:   document.getElementById('assetCategory'),
-    presetGroup:     document.getElementById('presetGroup'),
-    customGroup:     document.getElementById('customGroup'),
-    assetSearch:     document.getElementById('assetSearch'),
-    searchDropdown:  document.getElementById('searchDropdown'),
-    clearSearch:     document.getElementById('clearSearch'),
-    selectedTicker:  document.getElementById('selectedTicker'),
-    exportBtn:       document.getElementById('exportBtn'),
-    importBtn:       document.getElementById('importBtn'),
-    typeInput:       document.getElementById('type'),
-    typeBuy:         document.getElementById('typeBuy'),
-    typeSell:        document.getElementById('typeSell'),
-    autoFillPrice:   document.getElementById('autoFillPrice'),
-    toast:           document.getElementById('toast'),
-};
+const el = {};
+
+/** Tüm DOM elemanlarını güvenle bağla */
+function mapElements() {
+    const ids = [
+        'transactionForm','portfolioBody','historyBody','totalWealth','wealthCost',
+        'totalProfitLoss','profitTrend','plIcon','bestPerformer','bestPerformerPct',
+        'assetCount','txCount','clearData','refreshBtn','loadingOverlay','lastUpdateTime',
+        'priceStatusBadge','distributionChart','lineChart','chartEmpty','lineChartEmpty',
+        'portfolioEmpty','historyEmpty','assetCategory','presetGroup','customGroup',
+        'assetSearch','searchDropdown','clearSearch','selectedTicker','exportBtn',
+        'importBtn','type','typeBuy','typeSell','autoFillPrice','toast'
+    ];
+    ids.forEach(id => {
+        el[id] = document.getElementById(id);
+    });
+    // app.js içinde kullanılan takma isimler için yönlendirme:
+    el.form = el.transactionForm;
+    el.priceStatus = el.priceStatusBadge;
+    el.pieCanvas = el.distributionChart;
+    el.lineCanvas = el.lineChart;
+    el.typeInput = el.type;
+}
 
 /* ============================================================
    4. BAŞLATMA
@@ -179,26 +160,30 @@ const el = {
 
 /** Uygulama başlatma — önce UI'ı yükle, sonra fiyatları çek */
 async function init() {
-    try {
-        // Bugünkü tarihi varsayılan olarak ayarla
-        const dateInput = document.getElementById('date');
-        if (dateInput) dateInput.valueAsDate = new Date();
+    console.log("InvestIQ Başlatılıyor...");
+    
+    // 1. Elemanları haritala
+    mapElements();
+    
+    // 2. Loading'i hemen kapat (Yedek: 2 sn sonra zorla kapat)
+    setTimeout(hideLoading, 500); 
+    setTimeout(hideLoading, 2000);
 
-        // Event listener'ları kaydet (Hata olsa bile devam et)
+    try {
+        // 3. Tarih ve Eventler
+        if (document.getElementById('date')) document.getElementById('date').valueAsDate = new Date();
         bindEvents();
 
-        // UI'ı mevcut verilerle göster
+        // 4. İlk görünüme hazırla
         updateUI();
         
-    } catch (e) {
-        console.error("Başlatma hatası:", e);
-    } finally {
-        // Ne olursa olsun yükleme ekranını 1 saniye sonra kapat
-        setTimeout(hideLoading, 1000);
-        
-        // Fiyat güncellemesini arka planda başlat
+        // 5. Fiyatları arka planda çek
         fetchAllPrices();
         setInterval(fetchAllPrices, REFRESH_INTERVAL_MS);
+
+    } catch (err) {
+        console.error("KRİTİK HATA:", err);
+        hideLoading(); // Hata olsa bile ekranı kilitleme
     }
 }
 
