@@ -322,7 +322,20 @@ async function handleSubmit(e) {
 
 /** Şu an seçili ticker'ı döndürür */
 function getSelectedTicker() {
-    return el.selectedTicker.value.trim().toUpperCase() || null;
+    // 1. Eğer bir sonuç seçildiyse (hidden input doluysa)
+    let ticker = el.selectedTicker.value.trim().toUpperCase();
+    
+    // 2. Eğer seçim yoksa, arama kutusuna yazılanı kullan
+    if (!ticker) {
+        ticker = el.assetSearch.value.trim().toUpperCase();
+        
+        // BIST İpucu: Eğer 5 karakterli bir kod ise ve sonuna .IS eklenmemişse otomatik ekle (Örn: THYAO -> THYAO.IS)
+        if (ticker.length >= 4 && ticker.length <= 6 && !ticker.includes('.') && !ticker.includes('-')) {
+            ticker += '.IS';
+        }
+    }
+    
+    return ticker || null;
 }
 
 /** Arama Girişi Yönetimi */
