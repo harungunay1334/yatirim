@@ -1,22 +1,18 @@
 {
-  "name": "InvestIQ Yatırım Takip",
+  "id": "./",
+  "name": "InvestIQ — Yatırım Takip",
   "short_name": "InvestIQ",
-  "description": "Kişisel Yatırım ve Portföy Takip Uygulaması",
-  "start_url": "./index.html",
+  "description": "Altın, döviz, hisse ve kripto yatırımlarını takip et; kâr/zarar durumunu anlık gör.",
+  "lang": "tr",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#09090f",
-  "theme_color": "#6366f1",
   "orientation": "portrait",
+  "background_color": "#0b0f1a",
+  "theme_color": "#0b0f1a",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

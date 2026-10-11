@@ -2,118 +2,59 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>InvestIQ | Yatırım Takip</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>InvestIQ</title>
+    <meta name="description" content="Altın, döviz, hisse ve kripto yatırımlarını takip et; kâr/zarar durumunu anlık gör.">
+
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b0f1a">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#6366f1">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2622/2622143.png">
+    <meta name="apple-mobile-web-app-title" content="InvestIQ">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icon-192.png">
 
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="stylesheet" href="style.css?v=4.0.0">
 </head>
 <body>
-
-    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
-        <div class="loading-spinner">
-            <div class="spinner-ring"></div>
-            <p id="loadingText">Güncel Fiyatlar Alınıyor...</p>
-        </div>
-    </div>
-
-    <div id="toast" class="toast"></div>
-
-    <div class="container">
-        <header>
-            <div class="logo-wrap">
-                <span class="logo-icon">📈</span>
+    <div id="app">
+        <header class="topbar">
+            <div class="brand">
+                <img src="icon-192.png" alt="" width="34" height="34">
                 <div>
                     <h1>InvestIQ</h1>
-                    <p id="priceStatus">Canlı Portföy Yönetimi</p>
+                    <p id="status" class="status">Yükleniyor…</p>
                 </div>
             </div>
-            <div class="header-actions">
-                <button id="refreshBtn" class="btn btn-icon"><i data-lucide="refresh-cw"></i></button>
-                <button id="exportBtn" class="btn btn-icon"><i data-lucide="download"></i></button>
-                <button id="importBtn" class="btn btn-icon"><i data-lucide="upload"></i></button>
-                <button id="clearData" class="btn btn-danger-sm"><i data-lucide="trash-2"></i></button>
+            <div class="top-actions">
+                <button id="btnPrivacy" class="icon-btn" aria-label="Tutarları gizle / göster"></button>
+                <button id="btnRefresh" class="icon-btn" aria-label="Fiyatları yenile"></button>
             </div>
         </header>
 
-        <div class="summary-grid">
-            <div class="summary-card">
-                <h3>Portföy Değeri</h3>
-                <div id="totalWealth" class="value">₺0,00</div>
-            </div>
-            <div class="summary-card">
-                <h3>Kar / Zarar</h3>
-                <div id="totalProfitLoss" class="value">₺0,00</div>
-            </div>
-        </div>
+        <main id="main">
+            <section class="view" id="view-portfolio"></section>
+            <section class="view" id="view-history" hidden></section>
+            <section class="view" id="view-analysis" hidden></section>
+            <section class="view" id="view-settings" hidden></section>
+        </main>
 
-        <div class="main-grid">
-            <div class="sidebar">
-                <div class="card">
-                    <h2 class="card-title"><i data-lucide="plus-circle"></i> İşlem Ekle</h2>
-                    <form id="transactionForm">
-                        <input type="date" id="date" required>
-                        <div class="search-container">
-                            <input type="text" id="assetSearch" placeholder="Varlık Ara (Hisse, Altın...)" autocomplete="off">
-                            <div id="searchDropdown" class="search-dropdown hidden"></div>
-                        </div>
-                        <input type="hidden" id="selectedTicker">
-                        <div class="type-toggle">
-                            <button type="button" id="typeBuy" class="toggle-btn active" data-value="AL">AL</button>
-                            <button type="button" id="typeSell" class="toggle-btn" data-value="SAT">SAT</button>
-                        </div>
-                        <input type="hidden" id="type" value="AL">
-                        <input type="number" id="amount" step="0.0001" placeholder="Miktar" required>
-                        <input type="number" id="price" step="0.01" placeholder="Birim Fiyat (TL)" required>
-                        <button type="button" id="autoFillPrice" class="btn-secondary-sm">Güncel Fiyatı Kullan</button>
-                        <textarea id="note" placeholder="Not (Opsiyonel)"></textarea>
-                        <button type="submit" class="btn btn-primary">Kaydet</button>
-                    </form>
-                </div>
-                <div class="card">
-                    <h2 class="card-title"><i data-lucide="pie-chart"></i> Dağılım</h2>
-                    <div class="chart-wrapper"><canvas id="distributionChart"></canvas></div>
-                </div>
-            </div>
+        <button id="fab" class="fab" aria-label="İşlem ekle"></button>
 
-            <div class="content">
-                <div class="card">
-                    <h2 class="card-title"><i data-lucide="briefcase"></i> Portföyüm</h2>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Varlık</th>
-                                    <th>Miktar</th>
-                                    <th>Maliyet</th>
-                                    <th>Güncel</th>
-                                    <th>K/Z</th>
-                                </tr>
-                            </thead>
-                            <tbody id="portfolioBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <nav class="tabbar" id="tabbar">
+            <button data-view="portfolio" class="active"><span data-icon="wallet"></span>Portföy</button>
+            <button data-view="history"><span data-icon="list"></span>İşlemler</button>
+            <button data-view="analysis"><span data-icon="pie"></span>Analiz</button>
+            <button data-view="settings"><span data-icon="sliders"></span>Ayarlar</button>
+        </nav>
     </div>
 
-    <script src="app.js"></script>
-    <script>
-        if (window.lucide) lucide.createIcons();
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(console.error);
-            });
-        }
-    </script>
+    <div id="sheets"></div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <input type="file" id="importFile" accept="application/json,.json,text/plain" hidden>
+
+    <script src="app.js?v=4.0.0"></script>
 </body>
 </html>

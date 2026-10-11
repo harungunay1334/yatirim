@@ -1,25 +1,39 @@
-# 📈 InvestIQ - Kişisel Yatırım Takip Uygulaması
+# 📈 InvestIQ — Kişisel Yatırım Takip
 
-InvestIQ, modern arayüzlü ve gerçek zamanlı fiyat verileriyle çalışan bir portföy yönetim aracıdır.
+Altın, döviz, hisse ve kripto yatırımlarını telefonda takip etmek için hafif bir PWA. Aldığın varlıkları girersin; uygulama güncel fiyatları çeker ve kâr/zarar durumunu gösterir.
 
-## 🚀 Özellikler
-- **Canlı Veriler:** Yahoo Finance üzerinden altın, döviz ve hisse senedi fiyatlarını anlık çeker.
-- **PWA Desteği:** Telefonunuza uygulama olarak yükleyebilir ve tam ekran kullanabilirsiniz.
-- **Portföy Analizi:** Ortalama maliyet, ilk alış tarihi ve bekleme süresi (vade) hesaplaması.
-- **Görselleştirme:** Chart.js ile portföy dağılımı ve değer geçmişi grafikleri.
-- **Dark Mode:** Göz yormayan, modern ve premium tasarım.
+## Özellikler
+- **Portföy özeti:** toplam değer, toplam ve günlük kâr/zarar, maliyet, gerçekleşen kâr/zarar, dolar karşılığı
+- **Türk yatırımcıya göre varlıklar:** gram, çeyrek, yarım, tam, Cumhuriyet, Ata, Reşat, beşli altın, 22 ayar bilezik, 14/18 ayar, gümüş, platin, dövizler
+- **Hisseler:** tüm BIST ve ABD hisseleri/ETF'leri (isimle arama)
+- **Kripto:** Binance TRY pariteleri
+- **Fon ve özel varlıklar:** fiyatı elle girilir (TEFAS fonları, arsa, mevduat…)
+- **İşlem geçmişi:** alış/satış ekle, düzenle, sil; komisyon ve not alanı
+- **Ortalama maliyet** yöntemiyle kâr/zarar, kısmi satışlarda gerçekleşen kâr
+- **Dolar bazında getiri:** TL getirinin dolar karşısındaki durumu
+- **Analiz:** kategori dağılımı, portföy payları, getiri sıralaması
+- **Gizleme modu:** tutarları tek dokunuşla gizle
+- **Yedekleme:** JSON yedek dosyası (paylaş menüsüyle Drive/WhatsApp'a), geri yükleme, Excel için CSV
+- Çevrimdışı açılır, yeni sürümler otomatik gelir
 
-## 📱 Mobilde Nasıl Kullanılır?
-1. Bu projeyi **GitHub Pages** üzerinden yayınlayın.
-2. iPhone (Safari) veya Android (Chrome) üzerinden URL'yi açın.
-3. Safari'de **'Paylaş'** -> **'Ana Ekrana Ekle'** diyerek yükleyin.
-4. Chrome'da **'Ayarlar'** -> **'Uygulamayı Yükle'** diyerek yükleyin.
+## Fiyat kaynakları
+| Varlık | Kaynak |
+|---|---|
+| Altın, gümüş, döviz | [Truncgil Finans](https://finans.truncgil.com) (kuyumcu alış/satış) |
+| Kripto | Binance |
+| BIST & ABD hisseleri | TradingView (BIST ~15 dk gecikmeli) |
+| Fon / diğer | Elle giriş |
 
-## 🛠️ Teknik Mimari
-- **Frontend:** Vanilla JS, HTML5, CSS3
-- **Grafik:** Chart.js
-- **İkonlar:** Lucide Icons
-- **Veri Kaynağı:** Yahoo Finance API (CORS Proxy ile)
+Hiçbiri proxy gerektirmez, doğrudan tarayıcıdan çağrılır.
 
----
-*Not: Bu uygulama tamamen yerel tarayıcı hafızasını (LocalStorage) kullanır. Verileriniz sunucuda değil, cihazınızda saklanır.*
+## Telefona kurulum
+1. GitHub Pages adresini aç: `https://harungunay1334.github.io/yatirim/`
+2. **iPhone (Safari):** Paylaş → *Ana Ekrana Ekle*
+3. **Android (Chrome):** ⋮ menü → *Uygulamayı yükle*
+
+> Eski sürüm yüklüyse uygulamayı **iki kez kapatıp açman** gerekebilir: ilk açılışta yeni sürüm indirilir, ikincisinde görünür. Eski verilerin otomatik taşınır.
+
+## Veriler
+Tüm veriler sadece cihazında (localStorage) saklanır, hiçbir sunucuya gönderilmez. Uygulamayı silmeden veya telefon değiştirmeden önce **Ayarlar → Yedek al** ile yedeğini al.
+
+*Bilgi amaçlıdır, yatırım tavsiyesi değildir.*
