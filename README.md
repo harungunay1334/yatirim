@@ -19,12 +19,15 @@ Altın, döviz, hisse ve kripto yatırımlarını telefonda takip etmek için ha
 ## Fiyat kaynakları
 | Varlık | Kaynak |
 |---|---|
-| Altın, gümüş, döviz | [Truncgil Finans](https://finans.truncgil.com) (kuyumcu alış/satış) |
+| Döviz, gram/has altın, gümüş | **Ziraat Bankası** internet veya şube kurları (Ayarlar'dan seçilir, varsayılan: internet) |
+| Diğer altınlar (çeyrek, Cumhuriyet, bilezik…) | [Truncgil Finans](https://finans.truncgil.com) (kuyumcu alış/satış) |
 | Kripto | Binance |
 | BIST & ABD hisseleri | TradingView (BIST ~15 dk gecikmeli) |
 | Fon / diğer | Elle giriş |
 
-Hiçbiri proxy gerektirmez, doğrudan tarayıcıdan çağrılır.
+Truncgil, Binance ve TradingView doğrudan tarayıcıdan çağrılır.
+
+Ziraat'in sitesi başka sitelerin tarayıcıdan okumasına izin vermediği için, `.github/workflows/ziraat.yml` 15 dakikada bir `scripts/ziraat.mjs` ile fiyatları çekip `ziraat-data` dalına `ziraat.json` olarak yazar; uygulama bu dosyayı okur. Ziraat verisi alınamazsa Truncgil fiyatları kullanılır.
 
 ## Telefona kurulum
 1. GitHub Pages adresini aç: `https://harungunay1334.github.io/yatirim/`

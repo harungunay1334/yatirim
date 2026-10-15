@@ -413,6 +413,7 @@ input[type="search"]::-webkit-search-cancel-button { filter: invert(1) opacity(.
 .seg button.on { background: var(--surface-3); color: var(--text); }
 .seg-wide { display: grid; width: 100%; margin: 4px 0 6px; }
 .seg-mini button { padding: 5px 10px; font-size: 12px; }
+.seg-3 button { padding: 9px 4px; font-size: 13px; white-space: normal; line-height: 1.2; }
 .seg-type button { padding: 11px; font-size: 15px; }
 .seg-type[data-t="AL"] button.on { background: var(--up-bg); color: var(--up); }
 .seg-type[data-t="SAT"] button.on { background: var(--down-bg); color: var(--down); }

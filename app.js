@@ -3,6 +3,8 @@
  *
  * Fiyat kaynakları (hepsi tarayıcıdan doğrudan erişilebilir, proxy gerekmez):
  *  - Altın / gümüş / döviz : finans.truncgil.com (kuyumcu alış-satış fiyatları, TL)
+ *                            veya Ziraat Bankası (internet/şube kurları; GitHub Actions'ın
+ *                            15 dk'da bir "ziraat-data" dalına yazdığı JSON üzerinden)
  *  - Kripto                : Binance (TRY pariteleri)
  *  - BIST & ABD hisseleri  : TradingView tarayıcı API'si (BIST ~15 dk gecikmeli)
  *  - Fon & diğer           : elle girilen fiyat
@@ -11,7 +13,7 @@
  */
 'use strict';
 
-const VERSION = '4.0.0';
+const VERSION = '4.1.0';
 
 const LS = {
     tx: 'investiq_v3_tx',
@@ -109,7 +111,7 @@ const S = {
     manual: load(LS.manual, {}),
     settings: Object.assign({
         hide: false, valuation: 'buy', sort: 'value', histFilter: 'all',
-        lastBackup: 0, lastChange: 0
+        fxSource: 'zr-int', zrTime: 0, lastBackup: 0, lastChange: 0
     }, load(LS.settings, {})),
     view: 'portfolio',
     fetching: false,
@@ -197,18 +199,26 @@ async function resolvePendingAssets() {
 // FİYAT ÇEKME
 // ============================================================
 
-async function fetchJSON(url, opts = {}, ms = 12000) {
+async function fetchText(url, opts = {}, ms = 12000) {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), ms);
     try {
         const r = await fetch(url, { ...opts, signal: ctrl.signal, cache: 'no-store' });
         if (!r.ok) throw new Error('HTTP ' + r.status);
-        return await r.json();
+        return await r.text();
     } finally { clearTimeout(timer); }
 }
 
+const fetchJSON = async (url, opts, ms) => JSON.parse(await fetchText(url, opts, ms));
+
 async function fetchTruncgil() {
-    const d = await fetchJSON('https://finans.truncgil.com/v4/today.json');
+    const txt = await fetchText('https://finans.truncgil.com/v4/today.json');
+    let d;
+    try { d = JSON.parse(txt); }
+    catch {
+        // Truncgil bazen dosyayı yarıda kesilmiş veriyor — son eksiksiz kayda kadar olan kısmı kurtar
+        d = JSON.parse(txt.slice(0, txt.lastIndexOf('},"') + 1) + '}');
+    }
     const t = Date.now();
     for (const [id, a] of Object.entries(CATALOG)) {
         if (a.src !== 'tg') continue;
@@ -218,6 +228,35 @@ async function fetchTruncgil() {
         if (!b && !s) continue;
         S.prices[id] = { b, s, chg: +it.Change || 0, t };
     }
+}
+
+// Altın & döviz fiyat kaynağı seçenekleri
+const FX_SOURCES = {
+    'zr-int':  { label: 'Ziraat internet', table: 'internet' },
+    'zr-gise': { label: 'Ziraat şube',     table: 'gise' },
+    'tg':      { label: 'Kuyumcu',         table: null }
+};
+const ZIRAAT_URL = 'https://raw.githubusercontent.com/harungunay1334/yatirim/ziraat-data/ziraat.json';
+
+// Ziraat'te olan varlıkların (dövizler, gram/has altın, gümüş) Truncgil fiyatını Ziraat'inkiyle değiştirir
+async function fetchZiraat(table) {
+    const d = await fetchJSON(ZIRAAT_URL + '?t=' + Math.floor(Date.now() / 60000));
+    if (!d?.[table] || Date.now() - d.t > 3 * 86400000) throw new Error('ziraat eski');
+    for (const [id, x] of Object.entries(d[table])) {
+        if (!CATALOG[id] || !(x.b || x.s)) continue;
+        S.prices[id] = { b: x.b, s: x.s, chg: x.chg || 0, t: d.t, src: 'zr' };
+    }
+    S.settings.zrTime = d.t;
+    saveSettings();
+}
+
+// Önce Truncgil (tüm altın türleri), seçiliyse üstüne Ziraat
+async function fetchFxGold() {
+    const errs = [];
+    await fetchTruncgil().catch(() => errs.push('Altın/Döviz'));
+    const table = FX_SOURCES[S.settings.fxSource]?.table;
+    if (table) await fetchZiraat(table).catch(() => errs.push('Ziraat'));
+    if (errs.length) throw new Error(errs.join(', '));
 }
 
 async function fetchBinance(assets) {
@@ -283,7 +322,7 @@ async function refreshPrices({ silent = false } = {}) {
         const assets = [...new Set(S.tx.map(t => t.asset))].map(getAsset).filter(Boolean);
 
         // Döviz kurları TradingView'daki ABD hisselerini çevirmek için önce lazım
-        await fetchTruncgil().catch(() => S.fetchErrors.push('Altın/Döviz'));
+        await fetchFxGold().catch(e => S.fetchErrors.push(e.message));
 
         const jobs = [];
         const bn = assets.filter(a => a.src === 'bn');
@@ -309,7 +348,7 @@ function priceOf(id) {
     const a = S.prices[id], m = S.manual[id];
     const auto = a ? {
         p: a.p ?? (S.settings.valuation === 'sell' ? (a.s || a.b) : (a.b || a.s)),
-        chg: a.chg || 0, t: a.t, manual: false
+        chg: a.chg || 0, t: a.t, manual: false, src: a.src
     } : null;
     if (m && (!auto || m.t >= auto.t)) return { p: m.p, chg: 0, t: m.t, manual: true };
     return auto;
@@ -829,8 +868,17 @@ function renderSettings() {
         </div>
 
         <div class="card">
+            <h3 class="card-title">Altın & döviz fiyat kaynağı</h3>
+            <p class="muted small">Ziraat'ten aldıysan Ziraat'i seç; kâr/zarar bankanın gerçek alış-satış fiyatıyla hesaplanır. Ziraat'te olmayan altınlar (çeyrek, Cumhuriyet, bilezik…) kuyumcu fiyatıyla gösterilir.</p>
+            <div class="seg seg-wide seg-3">
+                ${Object.entries(FX_SOURCES).map(([k, v]) => `<button data-src="${k}" class="${S.settings.fxSource === k ? 'on' : ''}">${v.label}</button>`).join('')}
+            </div>
+            ${FX_SOURCES[S.settings.fxSource]?.table ? `<p class="muted small">Ziraat fiyatları 15 dakikada bir güncellenir. Son Ziraat verisi: <b>${S.settings.zrTime ? ago(S.settings.zrTime) : 'henüz alınmadı'}</b></p>` : ''}
+        </div>
+
+        <div class="card">
             <h3 class="card-title">Altın & döviz değerleme</h3>
-            <p class="muted small">Kuyumcu/döviz bürosu iki fiyat verir. “Alış” fiyatı, elindekini bugün bozdursan alacağın paradır; gerçekçi kâr/zarar için önerilir.</p>
+            <p class="muted small">Banka/kuyumcu iki fiyat verir. “Alış” fiyatı, elindekini bugün bozdursan alacağın paradır; gerçekçi kâr/zarar için önerilir.</p>
             <div class="seg seg-wide">
                 <button data-val="buy" class="${S.settings.valuation === 'buy' ? 'on' : ''}">Alış (bozdurma)</button>
                 <button data-val="sell" class="${S.settings.valuation === 'sell' ? 'on' : ''}">Satış</button>
@@ -839,7 +887,7 @@ function renderSettings() {
 
         <div class="card">
             <h3 class="card-title">Fiyat kaynakları</h3>
-            <div class="kv"><span>Altın, gümüş, döviz</span><b>Truncgil Finans</b></div>
+            <div class="kv"><span>Altın, gümüş, döviz</span><b>${FX_SOURCES[S.settings.fxSource]?.table ? `${FX_SOURCES[S.settings.fxSource].label} + Truncgil` : 'Truncgil Finans'}</b></div>
             <div class="kv"><span>Kripto</span><b>Binance (TRY)</b></div>
             <div class="kv"><span>BIST & ABD hisseleri</span><b>TradingView</b></div>
             <div class="kv"><span>Fonlar</span><b>Elle giriş</b></div>
@@ -1283,7 +1331,7 @@ function openPicker(onPick) {
 
             render();
             // Elle girilen fiyatlar varsa katalog fiyatlarını da göstermek için (ilk açılışta) truncgil'i tazele
-            if (!S.prices.GRA) fetchTruncgil().then(() => { savePrices(); render(); }).catch(() => {});
+            if (!S.prices.GRA) fetchFxGold().catch(() => {}).then(() => { savePrices(); render(); });
         }
     });
 }
@@ -1308,7 +1356,7 @@ function openDetail(id) {
         const a = getAsset(id) || { id, name: id, cat: 'other', unit: '' };
         if (!p) return '<p class="muted pad">Bu varlığa ait işlem kalmadı.</p>';
         const pr = p.priceInfo;
-        const src = pr ? (pr.manual ? `elle girildi · ${ago(pr.t)}` : `otomatik · ${ago(pr.t)}`) : 'fiyat yok';
+        const src = pr ? (pr.manual ? `elle girildi · ${ago(pr.t)}` : `${pr.src === 'zr' ? FX_SOURCES[S.settings.fxSource]?.label || 'Ziraat' : 'otomatik'} · ${ago(pr.t)}`) : 'fiyat yok';
         const txs = sortedTx(S.tx.filter(t => t.asset === id)).reverse();
         const usdNow = usdRate();
 
@@ -1407,7 +1455,7 @@ async function doBackup() {
     const data = {
         app: 'InvestIQ', version: VERSION, exportedAt: new Date().toISOString(),
         transactions: S.tx, assets: S.assets, manualPrices: S.manual,
-        settings: { valuation: S.settings.valuation }
+        settings: { valuation: S.settings.valuation, fxSource: S.settings.fxSource }
     };
     const name = `investiq-yedek-${today()}.json`;
     const file = new File([JSON.stringify(data, null, 2)], name, { type: 'application/json' });
@@ -1470,6 +1518,7 @@ async function importFromText(text) {
     S.assets = { ...S.assets, ...assets };
     S.manual = { ...S.manual, ...manual };
     if (d.settings?.valuation) S.settings.valuation = d.settings.valuation;
+    if (FX_SOURCES[d.settings?.fxSource]) S.settings.fxSource = d.settings.fxSource;
     S.settings.lastBackup = Date.now();
     saveTx(); saveAssets(); saveManual(); saveSettings();
     setView('portfolio');
@@ -1499,12 +1548,17 @@ function bindEvents() {
     });
 
     $('#main').addEventListener('click', e => {
-        const t = e.target.closest('[data-act],[data-detail],[data-tx],[data-hist],[data-val]');
+        const t = e.target.closest('[data-act],[data-detail],[data-tx],[data-hist],[data-val],[data-src]');
         if (!t) return;
         if (t.dataset.detail) return openDetail(t.dataset.detail);
         if (t.dataset.tx) return openTxForm({ tx: S.tx.find(x => x.id === +t.dataset.tx) });
         if (t.dataset.hist) { S.settings.histFilter = t.dataset.hist; saveSettings(); return renderView(); }
         if (t.dataset.val) { S.settings.valuation = t.dataset.val; saveSettings(); return renderAll(); }
+        if (t.dataset.src) {
+            if (S.settings.fxSource === t.dataset.src) return;
+            S.settings.fxSource = t.dataset.src; saveSettings(); renderAll();
+            return refreshPrices();
+        }
         switch (t.dataset.act) {
             case 'add': return openTxForm();
             case 'import': return $('#importFile').click();
