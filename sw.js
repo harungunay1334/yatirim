@@ -1,6 +1,6 @@
 // InvestIQ service worker — uygulama dosyaları için "önce ağ" stratejisi:
 // yeni sürüm yayınlanınca telefonda hemen görünür, internet yoksa önbellekten açılır.
-const CACHE = 'investiq-v4.1.0';
+const CACHE = 'investiq-v4.2.0';
 const CORE = [
     './',
     './index.html',

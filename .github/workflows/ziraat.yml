@@ -1,4 +1,6 @@
-# Ziraat Bankası döviz/altın fiyatlarını 15 dakikada bir çekip "ziraat-data" dalına yazar.
+# Ziraat Bankası döviz/altın fiyatlarını çekip "ziraat-data" dalına yazar (Vercel API'sine
+# ulaşılamazsa uygulamanın kullandığı yedek). GitHub sık zamanlanmış görevleri geciktirdiği için
+# pratikte birkaç saatte bir çalışır.
 # Uygulama dosyayı raw.githubusercontent.com üzerinden okur. Dal her seferinde tek
 # commit olarak üzerine yazılır, böylece main'in geçmişi kirlenmez.
 name: Ziraat fiyatları

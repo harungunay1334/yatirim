@@ -27,7 +27,10 @@ Altın, döviz, hisse ve kripto yatırımlarını telefonda takip etmek için ha
 
 Truncgil, Binance ve TradingView doğrudan tarayıcıdan çağrılır.
 
-Ziraat'in sitesi başka sitelerin tarayıcıdan okumasına izin vermediği için, `.github/workflows/ziraat.yml` 15 dakikada bir `scripts/ziraat.mjs` ile fiyatları çekip `ziraat-data` dalına `ziraat.json` olarak yazar; uygulama bu dosyayı okur. Ziraat verisi alınamazsa Truncgil fiyatları kullanılır.
+Ziraat'in sitesi başka sitelerin tarayıcıdan okumasına izin vermediği için fiyatlar sunucu tarafında çekilir (kod: `lib/ziraat.mjs`):
+- **Anlık:** Vercel'deki `api/ziraat` fonksiyonu. Uygulama fiyatları yenilerken önce bunu çağırır (Vercel önbelleği en fazla 1 dk).
+- **Yedek:** `.github/workflows/ziraat.yml`, `scripts/ziraat.mjs` ile fiyatları `ziraat-data` dalına `ziraat.json` olarak yazar. GitHub bu görevi pratikte birkaç saatte bir çalıştırır.
+- İkisi de alınamazsa Truncgil fiyatları kullanılır.
 
 ## Telefona kurulum
 1. GitHub Pages adresini aç: `https://harungunay1334.github.io/yatirim/`

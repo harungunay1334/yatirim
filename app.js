@@ -3,8 +3,9 @@
  *
  * Fiyat kaynakları (hepsi tarayıcıdan doğrudan erişilebilir, proxy gerekmez):
  *  - Altın / gümüş / döviz : finans.truncgil.com (kuyumcu alış-satış fiyatları, TL)
- *                            veya Ziraat Bankası (internet/şube kurları; GitHub Actions'ın
- *                            15 dk'da bir "ziraat-data" dalına yazdığı JSON üzerinden)
+ *                            veya Ziraat Bankası (internet/şube kurları; Vercel'deki api/ziraat
+ *                            anlık çeker, ulaşılamazsa GitHub Actions'ın "ziraat-data" dalına
+ *                            yazdığı yedek JSON okunur)
  *  - Kripto                : Binance (TRY pariteleri)
  *  - BIST & ABD hisseleri  : TradingView tarayıcı API'si (BIST ~15 dk gecikmeli)
  *  - Fon & diğer           : elle girilen fiyat
@@ -13,7 +14,7 @@
  */
 'use strict';
 
-const VERSION = '4.1.0';
+const VERSION = '4.2.0';
 
 const LS = {
     tx: 'investiq_v3_tx',
@@ -236,11 +237,14 @@ const FX_SOURCES = {
     'zr-gise': { label: 'Ziraat şube',     table: 'gise' },
     'tg':      { label: 'Kuyumcu',         table: null }
 };
-const ZIRAAT_URL = 'https://raw.githubusercontent.com/harungunay1334/yatirim/ziraat-data/ziraat.json';
+const ZIRAAT_LIVE = 'https://yatirim-iota.vercel.app/api/ziraat';
+const ZIRAAT_BACKUP = 'https://raw.githubusercontent.com/harungunay1334/yatirim/ziraat-data/ziraat.json';
 
 // Ziraat'te olan varlıkların (dövizler, gram/has altın, gümüş) Truncgil fiyatını Ziraat'inkiyle değiştirir
 async function fetchZiraat(table) {
-    const d = await fetchJSON(ZIRAAT_URL + '?t=' + Math.floor(Date.now() / 60000));
+    // Önce Vercel'den anlık fiyat; olmazsa GitHub Actions'ın birkaç saatte bir yazdığı yedek dosya
+    const d = await fetchJSON(ZIRAAT_LIVE, {}, 8000)
+        .catch(() => fetchJSON(ZIRAAT_BACKUP + '?t=' + Math.floor(Date.now() / 60000)));
     if (!d?.[table] || Date.now() - d.t > 3 * 86400000) throw new Error('ziraat eski');
     for (const [id, x] of Object.entries(d[table])) {
         if (!CATALOG[id] || !(x.b || x.s)) continue;
@@ -873,7 +877,7 @@ function renderSettings() {
             <div class="seg seg-wide seg-3">
                 ${Object.entries(FX_SOURCES).map(([k, v]) => `<button data-src="${k}" class="${S.settings.fxSource === k ? 'on' : ''}">${v.label}</button>`).join('')}
             </div>
-            ${FX_SOURCES[S.settings.fxSource]?.table ? `<p class="muted small">Ziraat fiyatları 15 dakikada bir güncellenir. Son Ziraat verisi: <b>${S.settings.zrTime ? ago(S.settings.zrTime) : 'henüz alınmadı'}</b></p>` : ''}
+            ${FX_SOURCES[S.settings.fxSource]?.table ? `<p class="muted small">Fiyatları yenileyince Ziraat'ten anlık çekilir. Son Ziraat verisi: <b>${S.settings.zrTime ? ago(S.settings.zrTime) : 'henüz alınmadı'}</b></p>` : ''}
         </div>
 
         <div class="card">
